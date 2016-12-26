@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # encoding = utf-8
+
 class Time:
     def __init__(self, hour, minute, second):
         self._h = hour
