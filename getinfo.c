@@ -2,21 +2,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 void getdata(int *all);
 float meminfo();
 float getinfo(); 
+void stop(int stopsignal);
 int main(void)
 {
 float mem=0.0,cpu=0.0;
+struct sigaction sig;
+sig.sa_handler = stop;
+sigemptyset(&sig.sa_mask);
+sig.sa_flags = 0;
+sigaction(SIGINT, &sig, NULL);
 while(1)
 {
-cpu = getinfo();
-mem = meminfo();
-printf("\33\[s\33\[1m\33\[?25l CPU:\33\[32m%6.2f%%\33\[37m MEM:\33\[32m%6.2f%%\33\[?25h\33\[0m\33\[u",cpu,mem);
-fflush(stdout);
+    cpu = getinfo();
+    mem = meminfo();
+    printf("\33\[s\33\[1m\33\[?25lCPU:\33\[32m%6.2f%%\33\[37m MEM:\33\[32m%6.2f%%\33\[u",cpu,mem);
+    fflush(stdout);
 }
+
 return 0;
 }
+void stop(int stopsignal)
+{
+
+    printf("\33\[?25h\33\[0m");
+    exit(0);
+}
+
 float getinfo()
 {
 int all1[10],all[10],i;
@@ -26,7 +41,6 @@ sleep(1);
 getdata(all1);
 for(i=0;i<8;i++)
 {
-    //printf("%d -- %d\n",all[i],all1[i]);
     total += all1[i] - all[i];
     if(i<3)
     {
@@ -34,9 +48,9 @@ for(i=0;i<8;i++)
     }
 
 }
-//printf("%d -- %d\n",user,total);
 return (float)(user*100)/(float)(total);
 }
+
 void getdata(int *all)
 {
 char temp[10][10]={0},tmp='\0';
@@ -65,8 +79,11 @@ while(tmp!=10)
 
 fclose(fp);
 }
+
+
 float meminfo()
 {
+
 char total[10],free[10], tmp, t;
 FILE *fp=NULL;
 int all=0,used=0,i=0;
@@ -84,6 +101,7 @@ while(tmp!=10)
     }
 
 }
+
 all = atoi(total);
 i = ftell(fp);
 fseek(fp,i,0);
@@ -97,7 +115,6 @@ if((int)t>=48&&(int)t<=57)
     i++;
 }
 }
-used = all - atoi(free);
-//printf("%d -- %d\n",used,all);
+ used = all - atoi(free);
 return 100*used/all;
 }
