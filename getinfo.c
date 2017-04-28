@@ -12,7 +12,7 @@ while(1)
 {
 cpu = getinfo();
 mem = meminfo();
-printf("\33\[s\33\[1m\33\[?25l CPU:\33\[32m%5.2f%%\33\[37m MEM:\33\[32m%5.2f%%\33\[?25h\33\[0m\33\[u",cpu,mem);
+printf("\33\[s\33\[1m\33\[?25l CPU:\33\[32m%6.2f%%\33\[37m MEM:\33\[32m%6.2f%%\33\[?25h\33\[0m\33\[u",cpu,mem);
 fflush(stdout);
 }
 return 0;
