@@ -4,7 +4,7 @@
 #include <unistd.h>  
   
 void my_handler(int s){  
-           printf("Caught signal %d\n",s);  
+           printf("exit %d\n",s);  
            exit(1);   
   
 }  
@@ -12,13 +12,13 @@ void my_handler(int s){
 int main(int argc,char** argv)  
 {  
   
-   struct sigaction sigIntHandler;  
+   struct sigaction sig;  
   
-   sigIntHandler.sa_handler = my_handler;  
-   sigemptyset(&sigIntHandler.sa_mask);  
-   sigIntHandler.sa_flags = 0;  
+   sig.sa_handler = my_handler;  
+   sigemptyset(&sig.sa_mask);  
+   sig.sa_flags = 0;  
   
-   sigaction(SIGINT, &sigIntHandler, NULL);  
+   sigaction(SIGINT, &sig, NULL);  
   
    pause();  
   
