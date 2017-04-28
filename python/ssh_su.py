@@ -10,4 +10,4 @@ while 1:
     res = stdout.decode()
     print(res)
     if 'Password:' in res:
-        shell.send(b'huawei@123\n')
+        shell.send(b'zxl@123\n')
