@@ -28,7 +28,7 @@ return 0;
 void stop(int stopsignal)
 {
 
-    printf("\33\[?25h\33\[0m\n");
+    printf("\33\[?25h\33\[0m\33\[K\n");
     exit(0);
 }
 
