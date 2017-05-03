@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3.5
+#!/usr/bin/python3
 #encoding=utf-8
 from PIL import Image
 import sys
