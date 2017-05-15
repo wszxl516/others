@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-void getdata(int *all);
+int getdata(int *all);
 float meminfo();
 float getinfo(); 
 void stop(int stopsignal);
@@ -36,9 +36,9 @@ float getinfo()
 {
 int all1[10],all[10],i;
 int total=0,user=0;
-getdata(all);
+if(getdata(all)==1) return 0.0;
 sleep(1);
-getdata(all1);
+if(getdata(all1)==1) return 0.0;
 for(i=0;i<8;i++)
 {
     total += all1[i] - all[i];
@@ -51,7 +51,7 @@ for(i=0;i<8;i++)
 return (float)(user*100)/(float)(total);
 }
 
-void getdata(int *all)
+int getdata(int *all)
 {
 char temp[10][10]={0},tmp='\0';
 int i = 0,x = 0;
@@ -59,6 +59,7 @@ FILE *fp=NULL;
 int size=0;
 int flag=0;
 fp = fopen("/proc/stat", "r");
+if(fp==NULL) return 1;
 while(tmp!=10)
 {
     tmp = fgetc(fp);
@@ -78,6 +79,7 @@ while(tmp!=10)
 }
 
 fclose(fp);
+return 0;
 }
 
 
@@ -88,8 +90,7 @@ char total[10],free[10], tmp, t;
 FILE *fp=NULL;
 int all=0,used=0,i=0;
 fp = fopen("/proc/meminfo", "r");
-if(fp == NULL)
-printf("file not exist!");
+if(fp==NULL) printf("file not exist meminfo!\n");
 while(tmp!=10)
 {
     tmp = fgetc(fp);
