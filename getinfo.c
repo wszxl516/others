@@ -61,7 +61,7 @@ int flag=0;
 fp = fopen("/proc/stat", "r");
 while(tmp!=10)
 {
-    size = fread(&tmp,1,1,fp);
+    tmp = fgetc(fp);
     if(tmp>=48&&tmp<=57)
     {
         temp[i][x] = tmp;
@@ -87,13 +87,12 @@ float meminfo()
 char total[10],free[10], tmp, t;
 FILE *fp=NULL;
 int all=0,used=0,i=0;
-int size=0;
 fp = fopen("/proc/meminfo", "r");
 if(fp == NULL)
 printf("file not exist!");
 while(tmp!=10)
 {
-    size = fread(&tmp,1,1,fp);
+    tmp = fgetc(fp);
     if(tmp>=48&&tmp<=57)
     {
        total[i]=tmp;
@@ -108,7 +107,7 @@ fseek(fp,i,0);
 i = 0;
 while(t!=10)
 {
-size = fread(&t,1,1,fp);
+t = fgetc(fp);
 if((int)t>=48&&(int)t<=57)
 {
     free[i]=t;
