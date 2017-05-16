@@ -19,6 +19,7 @@ while(1)
 {
     cpu = getinfo();
     mem = meminfo();
+    if (mem < 0 || cpu < 0) continue;
     printf("\33\[K\33\[s\33\[1m\33\[?25l\33\[37mCPU:\33\[32m%6.2f%%\33\[37m MEM:\33\[32m%6.2f%%\33\[32m\33\[u",cpu,mem);
     fflush(stdout);
 }
@@ -59,7 +60,7 @@ FILE *fp=NULL;
 int size=0;
 int flag=0;
 fp = fopen("/proc/stat", "r");
-if(fp==NULL) return 1;
+if(fp==NULL) return -1;
 while(tmp!=10)
 {
     tmp = fgetc(fp);
@@ -90,7 +91,7 @@ char total[10],free[10], tmp, t;
 FILE *fp=NULL;
 int all=0,used=0,i=0;
 fp = fopen("/proc/meminfo", "r");
-if(fp==NULL) printf("file not exist meminfo!\n");
+if(fp==NULL) return -1;
 while(tmp!=10)
 {
     tmp = fgetc(fp);
@@ -115,6 +116,7 @@ if((int)t>=48&&(int)t<=57)
     i++;
 }
 }
- used = all - atoi(free);
+fclose(fp);
+used = all - atoi(free);
 return 100*used/all;
 }
