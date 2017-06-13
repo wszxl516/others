@@ -5,9 +5,7 @@ name="[a-zA-Z0-9.]{1,26}\.[a-zA-Z0-9]{0,26}"
 if [ `echo $1|egrep  $ip` ];then
     data=`curl $url$1 2>/dev/null`
     echo $data
-    exit 0
-fi
-if [ `echo $1|egrep  $name` ];then
+elif [ `echo $1|egrep  $name` ];then
     addr=`dig $1 +short|egrep -m1 $ip`
     echo $addr
     data=`curl $url$addr 2>/dev/null`
