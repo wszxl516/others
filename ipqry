@@ -1,0 +1,17 @@
+#!/bin/bash
+url=http://freeapi.ipip.net/
+ip="^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$"
+name="[a-zA-Z0-9.]{1,26}\.[a-zA-Z0-9]{0,26}"
+if [ `echo $1|egrep  $ip` ];then
+    data=`curl $url$1 2>/dev/null`
+    echo $data
+    exit 0
+fi
+if [ `echo $1|egrep  $name` ];then
+    addr=`dig $1 +short|egrep -m1 $ip`
+    echo $addr
+    data=`curl $url$addr 2>/dev/null`
+    echo $data
+else
+    echo -e "\033[0;31;1m请输入IP或者域名！\033[0m"
+fi
