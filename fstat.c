@@ -3,7 +3,7 @@
 #include "stdio.h"  
 #include "time.h"  
 #include "unistd.h"  
-  
+#include "malloc.h"
 void report(struct stat *ptr)  
 {  
     if(!ptr)  
@@ -11,36 +11,35 @@ void report(struct stat *ptr)
            return;  
        }  
           
-    printf("设备号：%d\n", ptr->st_dev);  
-    printf("所在节点: %d\n", ptr->st_ino);  
+    printf("设备号：%lu\n", ptr->st_dev);  
+    printf("所在节点: %lu\n", ptr->st_ino);  
     printf("文件属性: %o\n", ptr->st_mode);  
-    printf("链接数: %d\n", ptr->st_nlink);  
+    printf("链接数: %lu\n", ptr->st_nlink);  
     printf("所属用户: %d\n", ptr->st_uid);  
-    printf("数组: %d\n", ptr->st_gid);  
-    printf("文件大小: %d\n", ptr->st_size);  
-    printf("文件块大小: %d\n", ptr->st_blksize);  
-    printf("文件块数量: %d\n", ptr->st_blocks);  
-  
+    printf("属组: %d\n", ptr->st_gid);  
+    printf("文件大小: %ld\n", ptr->st_size);  
+    printf("文件块大小: %ld\n", ptr->st_blksize);  
+    printf("文件块数量: %ld\n", ptr->st_blocks);   
     struct tm* pAccesstime=localtime(&(ptr->st_atime));  
     struct tm* pModifytime=localtime(&(ptr->st_mtime));  
     struct tm* pChangetime=localtime(&(ptr->st_ctime));  
     char aBuffer[64] = {0};  
     char mBuffer[64] = {0};  
     char cBuffer[64] = {0};  
-    strftime(aBuffer, 64, "最后使用: %Y-%m-%d %H:%M:%S \n", pAccesstime);  
-    strftime(mBuffer, 64, "最后更新: %Y-%m-%d %H:%M:%S \n", pModifytime);  
-    strftime(cBuffer, 64, "最后修改: %Y-%m-%d %H:%M:%S \n", pChangetime);  
+    strftime(aBuffer, 64, "最后访问: %Y-%m-%d %H:%M:%S \n", pAccesstime);  
+    strftime(mBuffer, 64, "数据修改: %Y-%m-%d %H:%M:%S \n", pModifytime);  
+    strftime(cBuffer, 64, "节点修改: %Y-%m-%d %H:%M:%S \n", pChangetime);  
   
-    printf(aBuffer);  
-    printf(mBuffer);  
-    printf(cBuffer);  
+    printf("%s",aBuffer);  
+    printf("%s",mBuffer);  
+    printf("%s",cBuffer);  
 }  
   
 void Test(const char* pFileName)  
 {  
     if(!pFileName)  
     {  
-           printf("error: file pointer is null in Test function\n");  
+           printf("请输入文件名\n");  
            return;  
        }  
   
