@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+import os
+import time
+import sys
+
+#fork函数返回两次值
+#在父进程中返回子进程ID
+#在子进程中返回0
+
+def main():
+    if os.fork() != 0:
+        print('this-->', os.getpid(), 'start!')
+        sys.exit(0)
+    os.chdir('/home/sun')
+    os.setsid()
+#与原来的进程组(进程树)脱离，创建新的进程组
+#成为init的子进程
+#并且脱离终端
+    os.umask(0)
+#设置新建文件权限
+
+#进程组长可能会重新连接终端
+#第二个进程不会，安全起见
+    pid = os.fork()
+    if pid != 0:
+        print('daemon-->', os.getpid(), 'start!')
+        sys.exit(0)
+    daemon()
+
+def daemon():
+    while True:
+        print(os.getpid(), '-->', time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime()))
+        time.sleep(3)
+
+if __name__ == '__main__':
+    main()
