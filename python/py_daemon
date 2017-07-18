@@ -29,7 +29,10 @@ def main():
 
 def daemon():
     while True:
-        print(os.getpid(), '-->', time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime()))
+        with open('/home/sun/log.log', 'a')as fp:
+            fp.write(str(os.getpid()) + '-->' + \
+                     time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime()) +\
+                     '\n')
         time.sleep(3)
 
 if __name__ == '__main__':
