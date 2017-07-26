@@ -9,6 +9,8 @@ if __name__ == '__main__':
     res = so.test()
     print (res.contents.name)
     print (res.contents.age)
+    so.pfree.argstypes = ct.POINTER(StructPointer)
+    so.pfree(StructPointer)
 #C代码
 '''
 #include <stdio.h>  
@@ -28,4 +30,10 @@ StructPointer test()    // 返回结构体指针
     p->age = 20;  
       
     return p;   
-}  '''
+}  
+void pfree(StructPointer p)
+{
+free(p);
+}
+
+'''
