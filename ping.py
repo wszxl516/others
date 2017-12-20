@@ -10,13 +10,13 @@ import ctypes
 
 def recv(my_socket, ID, timeout):
     start_time = timeout
-    while True:
-        start_select = time.clock()
-        what_ready = select.select([my_socket], [], [], start_time)
-        how_long = (time.clock() - start_select)
-        if what_ready[0] == []:
-            return
+    start_select = time.clock()
+    what_ready = select.select([my_socket], [], [], start_time)
+    how_long = (time.clock() - start_select)
+    if what_ready[0] == []:
+        return
 
+    while True:
         time_received = time.clock()
         rec_packet, addr = my_socket.recvfrom(1024)
         icmp_header = rec_packet[20 : 28]
@@ -67,7 +67,7 @@ def send(my_socket, ip_addr, ID):
     packet = header + data
     my_socket.sendto(packet, (ip, 80))
 
-def icmp(ip_addr, timeout = 2):
+def icmp(ip_addr, timeout = 2, count=1):
     try:
         icmp = socket.getprotobyname('icmp')
         try:
@@ -75,17 +75,19 @@ def icmp(ip_addr, timeout = 2):
         except socket.error:
             raise
         ID = os.getpid() & 0xFFFF
-        send(socks, ip_addr, ID)
-        delay = recv(socks, ID, timeout)
-        socks.close()
+        for _ in range(count):
+            send(socks, ip_addr, ID)
+            delay = recv(socks, ID, timeout)
+            if delay:
+                print('reply in %0.3f s' % (delay * 1000))
+            else:
+                print('failed. (timeout in %s second.)' % timeout)
+            time.sleep(1)
     except socket.gaierror as e:
         print("failed. (socket error: '%s')" % e[1])
         return None
-    if delay == None:
-        print('failed. (timeout within %s second.)' % timeout)
-        return None
-    else:
-        print('reply in %0.4f ms' % (delay * 1000))
+    finally:
+        socks.close()
 
 
 if __name__ == '__main__':
@@ -93,8 +95,7 @@ if __name__ == '__main__':
         cmd = sys.argv[1]
         if not cmd:
             sys.exit()
-        icmp(cmd)
-        time.sleep(1)
+        icmp(cmd, count=3)
     except EOFError:
         pass
     except PermissionError as error:
