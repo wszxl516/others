@@ -13,6 +13,8 @@ main(int argc, char *argv[])
     }
 
     Py_Initialize();
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("sys.path.append('./')");
     pName = PyUnicode_DecodeFSDefault(argv[1]);
     /* Error checking of pName left out */
 
