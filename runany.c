@@ -28,7 +28,8 @@ main(int argc, char *argv[])
         if (pFunc && PyCallable_Check(pFunc)) {
             pArgs = PyTuple_New(argc - 3);
             for (i = 0; i < argc - 3; ++i) {
-                pValue = PyLong_FromLong(atoi(argv[i + 3]));
+                int len = strlen(argv[i+3]);
+                pValue = PyUnicode_Decode(argv[i + 3],len, "utf-8","ignore" );
                 if (!pValue) {
                     Py_DECREF(pArgs);
                     Py_DECREF(pModule);
