@@ -21,4 +21,4 @@ class SCSI:
         _ = os.path.join(block_path, dev[0])
         blocks = list(glob.iglob(os.path.join(_,  dev[0] + '*')))
         return (dev[0], [os.path.join('/dev', os.path.split(block)[-1]) for block in blocks])
-SCSI()
+print(SCSI())
