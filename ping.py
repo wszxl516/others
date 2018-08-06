@@ -68,12 +68,9 @@ def send(my_socket, ip_addr, ID):
     my_socket.sendto(packet, (ip, 80))
 
 def icmp(ip_addr, timeout = 2, count=1):
+    icmp = socket.getprotobyname('icmp')
+    socks = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
     try:
-        icmp = socket.getprotobyname('icmp')
-        try:
-            socks = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
-        except socket.error:
-            raise
         ID = os.getpid() & 0xFFFF
         for _ in range(count):
             send(socks, ip_addr, ID)
@@ -99,6 +96,6 @@ if __name__ == '__main__':
     except EOFError:
         pass
     except PermissionError as error:
-        print('Only run in root!')
+        print('Only run as root!')
     except KeyboardInterrupt as error:
         pass
