@@ -5,86 +5,89 @@ import socket
 import struct
 import select
 import time
-import ctypes
 
 
-def recv(my_socket, ID, timeout):
-    start_time = timeout
-    start_select = time.clock()
-    what_ready = select.select([my_socket], [], [], start_time)
-    how_long = (time.clock() - start_select)
-    if what_ready[0] == []:
-        return
+class Icmp:
+    def __init__(self, host, time_out=2, count=1, interval=1):
+        self._host = host
+        self._time_out = time_out
+        self._count = count
+        self._pid = os.getpid()
+        self._interval = interval
+        icmp_pro = socket.getprotobyname('icmp')
+        self._socks = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp_pro)
 
-    while True:
-        time_received = time.clock()
-        rec_packet, addr = my_socket.recvfrom(1024)
-        icmp_header = rec_packet[20 : 28]
-        ip_type, code, checksum, packet_ID, sequence = struct.unpack("bbHHh", icmp_header)
-        if ip_type != 8 and packet_ID == ID:
-            byte_in_double = struct.calcsize("d")
-            time_sent = struct.unpack("d", rec_packet[28 : 28 + byte_in_double])[0]
-            return time_received - time_sent
+    def start(self):
+        response = []
+        try:
+            for _ in range(self._count):
+                ip = self.send()
+                delay = self.recv()
+                response.append((round(delay*1000*1000, 4) if delay else None, ip))
+                time.sleep(self._interval)
+            return response
+        except socket.gaierror as e:
+            print("failed. (socket error: '%s')" % e[1])
+            return None
+        finally:
+            self._socks.close()
 
-        start_time = start_time - how_long
-        if start_time <= 0:
+    def send(self):
+        ip = socket.gethostbyname(self._host)
+        header = struct.pack('bbHHh', 8, 0, 0, self._pid, 1)
+        byte_in_double = struct.calcsize("d")
+        data = (192 - byte_in_double) * "P"
+        data = struct.pack("d", time.clock()) + data.encode()
+        my_checksum = self.checksum(header + data)
+        header = struct.pack("bbHHh", 8, 0, socket.htons(my_checksum), self._pid, 1)
+        packet = header + data
+        self._socks.sendto(packet, (ip, 80))
+        return ip
+
+    def recv(self):
+        start_time = self._time_out
+        start_select = time.time()
+        wait_ready = select.select([self._socks], [], [], start_time)
+        how_long = (time.time() - start_select)
+        if not wait_ready[0]:
             return
 
+        while True:
+            time_received = time.clock()
+            rec_packet, addr = self._socks.recvfrom(1024)
+            icmp_header = rec_packet[20: 28]
+            ip_type, code, check_sum, packet_id, sequence = struct.unpack("bbHHh", icmp_header)
+            if ip_type != 8 and packet_id == self._pid:
+                byte_in_double = struct.calcsize("d")
+                time_sent = struct.unpack("d", rec_packet[28: 28 + byte_in_double])[0]
+                return time_received - time_sent
 
-def checksum(source):
-    checksum = 0
-    count = (len(source) / 2) * 2
-    i = 0
-    while i < count:
-        temp = source[i + 1] * 256 + source[i]
-        checksum = checksum + temp
-        checksum = checksum & 0xffffffff
-        i = i + 2
+            start_time = start_time - how_long
+            if start_time <= 0:
+                return
 
-    if i < len(source):
-        checksum = checksum + source[len(source) - 1]
-        checksum = checksum & 0xffffffff
+    @staticmethod
+    def checksum(source):
+        check_sum = 0
+        count = (len(source) / 2) * 2
+        i = 0
+        while i < count:
+            temp = source[i + 1] * 256 + source[i]
+            check_sum = check_sum + temp
+            check_sum = check_sum & 0xffffffff
+            i = i + 2
 
-    checksum = (checksum >> 16) + (checksum & 0xffff)
-    checksum = checksum + (checksum >> 16)
-    answer = ~checksum
-    answer = answer & 0xffff
+        if i < len(source):
+            check_sum = check_sum + source[len(source) - 1]
+            check_sum = check_sum & 0xffffffff
 
-    answer = answer >> 8 | (answer << 8 & 0xff00)
-    return answer
+        check_sum = (check_sum >> 16) + (check_sum & 0xffff)
+        check_sum = check_sum + (check_sum >> 16)
+        answer = ~check_sum
+        answer = answer & 0xffff
 
-
-def send(my_socket, ip_addr, ID):
-    ip = socket.gethostbyname(ip_addr)
-    print(ip)
-    my_checksum = 0
-    header = struct.pack('bbHHh', 8, 0, 0, ID, 1)
-    byte_in_double = struct.calcsize("d")
-    data = (192 - byte_in_double) * "P"
-    data = struct.pack("d", time.clock()) + data.encode()
-    my_checksum = checksum(header + data)
-    header = struct.pack("bbHHh", 8, 0, socket.htons(my_checksum), ID, 1)
-    packet = header + data
-    my_socket.sendto(packet, (ip, 80))
-
-def icmp(ip_addr, timeout = 2, count=1):
-    icmp = socket.getprotobyname('icmp')
-    socks = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
-    try:
-        ID = os.getpid() & 0xFFFF
-        for _ in range(count):
-            send(socks, ip_addr, ID)
-            delay = recv(socks, ID, timeout)
-            if delay:
-                print('reply in %0.3f s' % (delay * 1000))
-            else:
-                print('failed. (timeout in %s second.)' % timeout)
-            time.sleep(1)
-    except socket.gaierror as e:
-        print("failed. (socket error: '%s')" % e[1])
-        return None
-    finally:
-        socks.close()
+        answer = answer >> 8 | (answer << 8 & 0xff00)
+        return answer
 
 
 if __name__ == '__main__':
@@ -92,7 +95,8 @@ if __name__ == '__main__':
         cmd = sys.argv[1]
         if not cmd:
             sys.exit()
-        icmp(cmd, count=3)
+        icmp = Icmp(cmd, time_out=3, count=10, interval=0.1)
+        print(icmp.start())
     except EOFError:
         pass
     except PermissionError as error:
