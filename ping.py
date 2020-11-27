@@ -3,14 +3,12 @@ import os
 import sys
 import socket
 import struct
-import select
 import time
 
 
 class Icmp:
-    def __init__(self, host, time_out=2, count=1, interval=1):
+    def __init__(self, host, count=1, interval=1):
         self._host = host
-        self._time_out = time_out
         self._count = count
         self._pid = os.getpid()
         self._interval = interval
@@ -23,48 +21,36 @@ class Icmp:
             for _ in range(self._count):
                 ip = self.send()
                 delay = self.recv()
-                response.append((round(delay*1000*1000, 4) if delay else None, ip))
+                response.append((round(delay * 1000, 2) if delay else None, ip))
                 time.sleep(self._interval)
             return response
         except socket.gaierror as e:
-            print("failed. (socket error: '%s')" % e[1])
             return None
         finally:
             self._socks.close()
 
     def send(self):
         ip = socket.gethostbyname(self._host)
-        header = struct.pack('bbHHh', 8, 0, 0, self._pid, 1)
+        header = struct.pack('bbHIh', 8, 0, 0, self._pid, 1)
         byte_in_double = struct.calcsize("d")
         data = (192 - byte_in_double) * "P"
-        data = struct.pack("d", time.clock()) + data.encode()
-        my_checksum = self.checksum(header + data)
-        header = struct.pack("bbHHh", 8, 0, socket.htons(my_checksum), self._pid, 1)
+        data = struct.pack("d", time.clock_gettime(1)) + data.encode()
+        checksum = self.checksum(header + data)
+        header = struct.pack("bbHIh", 8, 0, socket.htons(checksum), self._pid, 1)
         packet = header + data
-        self._socks.sendto(packet, (ip, 80))
+        self._socks.sendto(packet, (ip, 9))
         return ip
 
     def recv(self):
-        start_time = self._time_out
-        start_select = time.time()
-        wait_ready = select.select([self._socks], [], [], start_time)
-        how_long = (time.time() - start_select)
-        if not wait_ready[0]:
-            return
-
         while True:
-            time_received = time.clock()
             rec_packet, addr = self._socks.recvfrom(1024)
-            icmp_header = rec_packet[20: 28]
-            ip_type, code, check_sum, packet_id, sequence = struct.unpack("bbHHh", icmp_header)
+            icmp_header = rec_packet[20: 30]
+            ip_type, code, check_sum, packet_id, sequence = struct.unpack("bbHIh", icmp_header)
             if ip_type != 8 and packet_id == self._pid:
-                byte_in_double = struct.calcsize("d")
-                time_sent = struct.unpack("d", rec_packet[28: 28 + byte_in_double])[0]
-                return time_received - time_sent
-
-            start_time = start_time - how_long
-            if start_time <= 0:
-                return
+                time_sent = struct.unpack("d", rec_packet[30: 30 + struct.calcsize("d")])[0]
+                return time.clock_gettime(1) - time_sent
+            else:
+                return None
 
     @staticmethod
     def checksum(source):
@@ -95,7 +81,7 @@ if __name__ == '__main__':
         cmd = sys.argv[1]
         if not cmd:
             sys.exit()
-        icmp = Icmp(cmd, time_out=3, count=10, interval=0.1)
+        icmp = Icmp(cmd, count=3, interval=1)
         print(icmp.start())
     except EOFError:
         pass
